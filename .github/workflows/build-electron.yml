@@ -1,0 +1,94 @@
+name: Build NEON KJ Desktop App
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build Windows Installer (.exe)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install all workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build React frontend (renderer)
+        working-directory: artifacts/neon-kj
+        shell: bash
+        env:
+          PORT: "3001"
+          BASE_PATH: "/"
+          NODE_ENV: production
+        run: pnpm run build
+
+      - name: Build API server (both entries)
+        working-directory: artifacts/api-server
+        run: pnpm run build
+
+      - name: Copy server bundle into electron package
+        shell: bash
+        run: |
+          cp artifacts/api-server/dist/electron-entry.cjs artifacts/electron/server.cjs
+
+      - name: Copy renderer into electron package
+        shell: bash
+        run: |
+          cp -r artifacts/neon-kj/dist/public artifacts/electron/renderer
+
+      - name: Install electron package dependencies
+        working-directory: artifacts/electron
+        run: npm install
+
+      - name: Compile Electron TypeScript
+        working-directory: artifacts/electron
+        run: npx tsc
+
+      - name: Copy libsql native modules for Windows
+        shell: bash
+        run: |
+          mkdir -p artifacts/electron/node_modules/@libsql
+          cp -r node_modules/@libsql/client artifacts/electron/node_modules/@libsql/client || true
+          cp -r node_modules/@libsql/win32-x64-msvc artifacts/electron/node_modules/@libsql/win32-x64-msvc || true
+
+      - name: Build Windows installer
+        working-directory: artifacts/electron
+        run: npx electron-builder --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEON-KJ-Windows-Installer
+          path: artifacts/electron/release/*.exe
+          if-no-files-found: error
+          retention-days: 90
