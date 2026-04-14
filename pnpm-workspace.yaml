@@ -29,6 +29,16 @@ catalog:
   vite: ^7.3.0
   zod: ^3.25.76
 
+supportedArchitectures:
+  os:
+    - linux
+    - win32
+    - current
+  cpu:
+    - x64
+    - arm64
+    - current
+
 minimumReleaseAge: 1440
 
 onlyBuiltDependencies:
