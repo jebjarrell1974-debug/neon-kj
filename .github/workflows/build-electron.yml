@@ -7,107 +7,88 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
-    name: Build Windows Installer (.exe)
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
-      - run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-        shell: bash
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
-        working-directory: artifacts/neon-kj
-        shell: bash
-        env:
-          PORT: "3001"
-          BASE_PATH: "/"
-          NODE_ENV: production
-      - run: pnpm run build
-        working-directory: artifacts/api-server
-      - run: cp artifacts/api-server/dist/electron-entry.cjs artifacts/electron/server.cjs
-        shell: bash
-      - run: cp -r artifacts/neon-kj/dist/public artifacts/electron/renderer
-        shell: bash
-      - run: npm install
-        working-directory: artifacts/electron
-      - run: npx tsc
-        working-directory: artifacts/electron
-      - name: Copy libsql for Windows
-        shell: bash
-        run: |
-          mkdir -p artifacts/electron/node_modules/@libsql
-          cp -r node_modules/@libsql/client artifacts/electron/node_modules/@libsql/client || true
-          cp -r node_modules/@libsql/win32-x64-msvc artifacts/electron/node_modules/@libsql/win32-x64-msvc || true
-      - run: npx electron-builder --win --x64
-        working-directory: artifacts/electron
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: NEON-KJ-Windows-Installer
-          path: artifacts/electron/release/*.exe
-          if-no-files-found: error
-          retention-days: 90
-
   build-pi:
     name: Build Raspberry Pi 5 AppImage (ARM64)
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - uses: pnpm/action-setup@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
           run_install: false
-      - run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - uses: actions/cache@v4
+
+      - name: Get pnpm store directory
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-      - name: Install cross-compilation tools
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install system dependencies for ARM64 cross-compilation
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libfuse2
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
+          sudo apt-get install -y --no-install-recommends \
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+            libfuse2
+
+      - name: Install all workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build React frontend (renderer)
         working-directory: artifacts/neon-kj
         env:
           PORT: "3001"
           BASE_PATH: "/"
           NODE_ENV: production
-      - run: pnpm run build
+        run: pnpm run build
+
+      - name: Build API server (both entries)
         working-directory: artifacts/api-server
-      - run: cp artifacts/api-server/dist/electron-entry.cjs artifacts/electron/server.cjs
-      - run: cp -r artifacts/neon-kj/dist/public artifacts/electron/renderer
-      - run: npm install
+        run: pnpm run build
+
+      - name: Copy server bundle into electron package
+        run: cp artifacts/api-server/dist/electron-entry.cjs artifacts/electron/server.cjs
+
+      - name: Copy renderer into electron package
+        run: cp -r artifacts/neon-kj/dist/public artifacts/electron/renderer
+
+      - name: Install electron package dependencies
         working-directory: artifacts/electron
-      - run: npx tsc
+        run: npm install
+
+      - name: Compile Electron TypeScript
         working-directory: artifacts/electron
-      - name: Copy libsql for Linux ARM64
+        run: npx tsc
+
+      - name: Install libsql ARM64 native module
         working-directory: artifacts/electron
         run: |
           mkdir -p node_modules/@libsql
           cp -r ../../../node_modules/@libsql/client node_modules/@libsql/client || true
           npm install @libsql/linux-arm64-gnu --cpu=arm64 --os=linux --ignore-scripts 2>/dev/null || true
           cp -r ../../../node_modules/@libsql/linux-arm64-gnu node_modules/@libsql/linux-arm64-gnu 2>/dev/null || true
-      - run: npx electron-builder --linux --arm64
+
+      - name: Build Raspberry Pi AppImage (ARM64)
         working-directory: artifacts/electron
+        run: npx electron-builder --linux --arm64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
         with:
           name: NEON-KJ-RaspberryPi5
           path: artifacts/electron/release/*.AppImage
