@@ -1,0 +1,174 @@
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+ WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+ WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+ WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+ WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event {isTrusted: true, type: 'error', target: WebSocket, currentTarget: WebSocket, eventPhase: 2, …}
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...
+index-CHQ2ObrU.js:17 [WS] Connecting to wss://smart-karaoke.replit.app/ws
+index-CHQ2ObrU.js:17 WebSocket connection to 'wss://smart-karaoke.replit.app/ws' failed: 
+(anonymous) @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Error: Event {isTrusted: true, type: 'error', target: WebSocket, currentTarget: WebSocket, eventPhase: 2, …}
+c.onerror @ index-CHQ2ObrU.js:17
+index-CHQ2ObrU.js:17 [WS] Disconnected, reconnecting in 3s...

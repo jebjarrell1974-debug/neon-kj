@@ -1,0 +1,18 @@
+packages:
+  "framer-motion": "Smooth animations for queue changes and page transitions"
+  "usehooks-ts": "React hooks for debounce and local storage management"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility function to efficiently merge Tailwind CSS classes"
+
+images:
+  - path: "artifacts/neon-kj/public/images/neon-bg.png"
+    description: "Abstract dark neon nightclub background with glowing cyan and electric purple light streaks, very dark, atmospheric, subtle smoke"
+    aspect_ratio: "9:16"
+  - path: "artifacts/neon-kj/public/images/host-bg.png"
+    description: "Dark moody DJ booth background, subtle glowing equipment, out of focus, deep blacks and purples"
+    aspect_ratio: "16:9"
+
+notes:
+  - WebSocket connects to /ws (proxied to API server)
+  - Singer auth is lightweight via localStorage (singerId, singerName)
+  - Custom HTML5 Drag and Drop used for queue reordering as requested

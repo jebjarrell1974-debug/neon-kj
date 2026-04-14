@@ -1,0 +1,33 @@
+This is a well-thought-out plan. Here’s my honest assessment across the key dimensions:
+
+What’s Solid
+Hardware choice — The N100 over Pi 5 argument is correct and well-reasoned. The CPU budget math is realistic. JACK + LADSPA on x86-64 Ubuntu is a proven stack; you’re not fighting ARM quirks or HAT compatibility.
+Rotation engine — Virtual stage time with a negative head-start for new singers is exactly how professional KJ software works (KJ Commander, etc. use the same logic). Clean and fair.
+Audio chain architecture — Rubberband LADSPA for mid-song pitch is the right call. VLC’s built-in pitch via RC interface is indeed not adjustable mid-song. The JACK → Carla-rack → OSC control path is realistic.
+Offline-first design — espeak + template fallback for ElevenLabs, no cloud dependency for core functionality. Good for a live venue system.
+PWA push notification strategy — VAPID + web-push is correct. The iOS 16.4+ / Add to Home Screen caveat is accurately documented.
+
+Real Concerns Worth Flagging
+1. Carla-rack headless is under-documented and fragile in practice
+Carla’s headless mode (carla-rack --no-gui) works, but OSC parameter addressing for LADSPA plugins requires knowing the exact OSC path Carla assigns at runtime, which can shift depending on load order. You’ll spend real time debugging why setParam() silently does nothing. Consider whether JACK + direct LADSPA host via jalv (one plugin per instance, predictable OSC) or even a custom Python JACK client using python-jack gives you more control. Not a blocker, but budget extra time here.
+2. VLC RC interface over Unix socket has quirks
+--intf rc with a Unix socket works, but VLC’s RC interface is notoriously inconsistent — commands sometimes need a delay, responses aren’t always clean to parse. The JACK output routing from VLC also requires --aout jack and correct port naming. Worth prototyping VLC → JACK routing first before building the full chain on top of it.
+3. The ~31% CPU estimate may be optimistic under real conditions
+The numbers are reasonable at steady state, but:
+	∙	JACK at 256 frames/period is 5.3ms latency at 48kHz — low enough that xruns become a real risk on an N100 under load
+	∙	VLC + JACK routing adds overhead vs. direct ALSA
+	∙	Node.js WebSocket broadcast spikes during queue changes
+	∙	You may want 1024 frames/period (21ms latency, still imperceptible for karaoke) for stability. The plan doesn’t mention JACK buffer tuning, which is the #1 cause of audio glitches in live setups.
+4. Web Push on iOS is still fragile
+iOS 16.4+ web push works only when installed to the home screen, and even then Apple’s implementation has known reliability issues — notifications sometimes don’t fire when the app is backgrounded for too long, or after device restarts. For a live show where a missed “you’re up next” notification causes a dead mic moment, you need a fallback. Your WebSocket path covers the open-app case well. Just don’t over-promise the push reliability to venue operators.
+5. CDG + MP3 zip pairing
+The plan mentions .zip file support but doesn’t detail the pairing logic for zip files containing CDG+MP3. CDG rendering also needs a dedicated player — VLC renders CDG but the quality and sync can be inconsistent. If your library is mostly MP4/MKV karaoke video, this is a non-issue. If it’s primarily CDG+MP3 pairs, consider whether VLC handles this well enough or whether cdg-player/pycdg is worth integrating.
+
+What’s Underspecified (not wrong, just needs fleshing out)
+	∙	Lyrics display — The plan mentions HDMI output for “KJ panel + lyrics” but doesn’t describe how lyrics are displayed. VLC renders CDG on screen, but a split-screen between the KJ control panel and the lyric display needs a window management strategy (two monitors? browser fullscreen on one display, VLC on another?).
+	∙	Song library pre-tagging — BPM and energy_score are in the schema, but the scanner section doesn’t address how those get populated. Manual? bpm-tools/librosa auto-analysis? This affects the rotation energy modifier and analytics from day one.
+	∙	Graceful JACK recovery — If JACK crashes mid-show (it happens), the restart path is documented as a fallback to direct ALSA, but the KJ panel should make this visible and recoverable without restarting the whole service.
+
+Overall Verdict
+Feasible — not trivial. The plan is technically coherent and the architectural decisions are mostly correct. The audio chain is the highest-risk component (JACK + Carla + OSC is the most moving parts in one place), and that’s also the part that matters most in a live venue. I’d prototype Phase 2 first in isolation — get VLC → JACK → Rubberband → Scarlett → PA actually working on the N100 hardware before building the app around it. Everything else (rotation engine, PWA, analytics) is straightforward web development.
+The < 10 minutes to running show goal is achievable for a clean Ubuntu install if the install.sh is well-tested, but plan for the first real venue deployment to take longer while you tune JACK buffer settings to the specific venue’s machine environment.​​​​​​​​​​​​​​​​

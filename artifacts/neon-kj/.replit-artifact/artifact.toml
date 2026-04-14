@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "NEON KJ"
+version = "1.0.0"
+id = "artifacts/neon-kj"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 22871
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/neon-kj run dev"
+
+[services.env]
+PORT = "22871"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/neon-kj", "run", "build"]
+publicDir = "artifacts/neon-kj/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

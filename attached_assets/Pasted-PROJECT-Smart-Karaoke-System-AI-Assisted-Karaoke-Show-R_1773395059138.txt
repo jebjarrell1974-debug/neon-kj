@@ -1,0 +1,352 @@
+PROJECT: Smart Karaoke System (AI-Assisted Karaoke Show Runner)
+Called NIGHTCLUB ENTERTAINMENT OPERATIONS NETWORK Karaoke jock
+NEON KJ
+
+Overview
+
+This project is a Raspberry Pi–based karaoke system designed to automate karaoke shows in bars or entertainment venues. The system should manage singer rotation fairly, maintain crowd energy throughout the night, and provide a mobile interface for singers.
+
+Hardware Platform
+
+Primary device: Raspberry Pi 5 (8GB)
+
+Expected hardware configuration:
+
+Raspberry Pi 5  
+NVMe SSD for local karaoke library  
+DAC HAT for audio output  
+HDMI output for lyrics display  
+WiFi or Ethernet connectivity  
+
+The Raspberry Pi acts as a karaoke server.
+
+Users connect via phones to interact with the system.
+
+---
+
+System Architecture
+
+Major subsystems:
+
+Karaoke Playback Engine  
+Singer Rotation Engine  
+Mobile Singer Web Interface  
+Host Control Panel  
+Break Song Engine  
+AI DJ Voice System  
+Hybrid Song Library  
+Crowd Energy Analytics  
+Performance Data Tracking  
+
+---
+
+1. Karaoke Playback Engine
+
+Supported formats:
+
+MP4 karaoke  
+MP3 + CDG  
+MKV karaoke  
+
+Features:
+
+Play / pause / stop  
+Lyric display via HDMI  
+Key shifting (pitch adjustment)  
+Tempo adjustment  
+Guide vocal control  
+
+---
+
+2. Hybrid Song Library
+
+Search order:
+
+1. Local NVMe karaoke library
+2. Cloud karaoke service
+3. Future AI karaoke generation
+
+If a song is streamed from the cloud it can be cached locally.
+
+The system must support offline operation if internet fails.
+
+---
+
+3. Singer Mobile Interface
+
+Users scan a QR code to access a web interface hosted on the Raspberry Pi.
+
+Features:
+
+Create singer profile  
+Search karaoke songs  
+Add song to rotation  
+View current rotation  
+View estimated wait time  
+Receive notification when turn approaches  
+
+---
+
+4. Host Control Panel
+
+Host features:
+
+Start next singer  
+Skip singer  
+Reorder singers  
+Pause rotation  
+Trigger break songs  
+Adjust key / tempo  
+Remove singer  
+Manual override controls  
+
+---
+
+5. Break Song Engine
+
+Between singers the system should play short filler music.
+
+Purpose:
+
+Allow singer transition  
+Prevent dead air  
+Maintain show momentum  
+
+Break songs typically last 10–30 seconds.
+
+---
+
+6. Automated DJ Voice
+
+The system includes an automated announcer.
+
+Example flow:
+
+Singer finishes performance  
+Break music plays  
+System announces next singer  
+
+Example:
+
+“Coming to the stage, Sarah singing Shallow.”
+
+Text-to-speech technology can generate announcements.
+
+The AI voice may occasionally perform songs for entertainment.
+
+---
+
+7. Singer Rotation Algorithm
+
+The rotation system must balance:
+
+New singers  
+Returning singers  
+Fair stage time  
+
+The system should prevent long waits while allowing regular singers to perform multiple times.
+
+Target goal:
+
+New singers should typically sing within 30–40 minutes.
+
+---
+
+Algorithm: Virtual Stage Time Scheduler
+
+Each singer has a variable called:
+
+virtual_stage_time
+
+When a singer performs:
+
+virtual_stage_time += song_length_minutes
+
+The next singer selected is the singer with the lowest virtual_stage_time.
+
+Pseudo code:
+
+for each singer in queue:
+    priority = virtual_stage_time
+
+next_singer = singer with lowest priority
+
+---
+
+New Singer Priority Boost
+
+New singers receive an initial virtual time bonus.
+
+Example:
+
+new_singer_virtual_time = -10
+
+This allows new singers to enter the rotation quickly.
+
+After their first song they merge into the normal scheduling system.
+
+---
+
+Song Length Fairness
+
+Long songs automatically increase virtual_stage_time.
+
+Example:
+
+Singer A sings a 8-minute song
+
+virtual_stage_time += 8
+
+This means Singer A waits longer before singing again.
+
+---
+
+Wait Time Estimation
+
+The system estimates wait time using average song duration.
+
+Formula:
+
+estimated_wait_time =
+(number_of_singers_ahead × average_song_length)
+
+Example:
+
+5 singers ahead  
+average song length = 4 minutes
+
+Estimated wait = 20 minutes
+
+---
+
+8. Crowd Energy Tracking
+
+The system collects song and performance data.
+
+Data stored:
+
+Song BPM  
+Song genre  
+Song duration  
+Singer ID  
+Time performed  
+Wait time  
+Crowd reaction rating  
+
+These values allow the system to estimate crowd energy levels.
+
+---
+
+Energy Score Calculation
+
+Each song receives an energy rating.
+
+Example scale:
+
+1–3 slow ballads  
+4–6 medium energy  
+7–10 high energy sing-alongs  
+
+Example energy formula:
+
+energy_score =
+(BPM_factor + crowd_response + song_popularity) / 3
+
+---
+
+Energy Curve Model
+
+Nightlife typically follows an energy curve.
+
+Warm-up phase  
+Peak phase  
+Cool-down phase  
+
+The system should maintain the highest energy between:
+
+10 PM and 2 AM.
+
+During this period the system should encourage high-energy songs.
+
+---
+
+Energy Priority Modifier
+
+During peak hours the rotation algorithm may apply small priority bonuses.
+
+Example:
+
+if current_time between 10pm and 2am:
+
+    if song_energy > 7:
+        priority -= 2
+
+This slightly promotes energetic songs without overriding fairness.
+
+---
+
+Slow Song Limiter
+
+To avoid multiple slow songs in a row:
+
+if last_three_songs_energy < 4:
+    apply_priority_bonus_to_high_energy_songs()
+
+---
+
+9. Performance Data Collection
+
+Each performance record includes:
+
+Singer ID  
+Song ID  
+Song BPM  
+Song duration  
+Performance timestamp  
+Wait time before singing  
+Crowd response rating  
+
+This data supports analytics and future AI features.
+
+---
+
+10. Additional Karaoke Features
+
+The system should include common karaoke functionality.
+
+Key shift adjustment  
+Tempo control  
+Duet mode  
+Background visuals  
+Singer scoring  
+Performance recording  
+Theme playlist support  
+Crowd games and trivia  
+
+---
+
+11. Future AI Karaoke Generation (Optional)
+
+Future exploration may include AI-generated karaoke tracks.
+
+If a song is not available in the library, the system could generate a karaoke version using vocal removal technology.
+
+This approach uses audio source separation similar to the system used by Gaudio Sing from Gaudio Lab.
+
+The generated track could be cached locally for reuse.
+
+---
+
+Project Goal
+
+The objective is to create an intelligent karaoke system that acts as a full show manager.
+
+The system should:
+
+Manage fair singer rotation  
+Maintain crowd energy throughout the night  
+Provide mobile self-service singer signup  
+Automate announcements and hosting tasks  
+Track show analytics and performance history  
+
+The system should operate as a self-contained karaoke appliance running on Raspberry Pi hardware.
