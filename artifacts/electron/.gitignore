@@ -1,0 +1,5 @@
+dist/
+release/
+server.cjs
+renderer/
+node_modules/
