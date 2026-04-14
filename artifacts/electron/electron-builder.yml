@@ -38,8 +38,11 @@ mac:
     - dmg
   category: public.app-category.music
 
-# Linux
+# Linux (Raspberry Pi 5 — ARM64)
 linux:
   target:
-    - AppImage
+    - target: AppImage
+      arch:
+        - arm64
   category: Audio
+  executableName: neon-kj
