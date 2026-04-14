@@ -32,7 +32,6 @@ async function buildAll() {
   const distDir = path.resolve(__dirname, "dist");
   await rm(distDir, { recursive: true, force: true });
 
-  console.log("building server...");
   const pkgPath = path.resolve(__dirname, "package.json");
   const pkg = JSON.parse(await readFile(pkgPath, "utf-8"));
   const allDeps = [
@@ -41,29 +40,41 @@ async function buildAll() {
   ];
 
   const externals = [
-    // Native packages — always external
     ...nativeExternals,
-    // Regular deps not in the allowlist and not workspace packages
     ...allDeps.filter(
       (dep) =>
         !allowlist.includes(dep) &&
-        !(pkg.dependencies?.[dep]?.startsWith("workspace:")),
+        !(pkg.dependencies?.[dep]?.startsWith("workspace:"))
     ),
   ];
 
-  await esbuild({
-    entryPoints: [path.resolve(__dirname, "src/index.ts")],
-    platform: "node",
+  const sharedConfig = {
+    platform: "node" as const,
     bundle: true,
-    format: "cjs",
-    outfile: path.resolve(distDir, "index.cjs"),
-    define: {
-      "process.env.NODE_ENV": '"production"',
-    },
+    format: "cjs" as const,
+    define: { "process.env.NODE_ENV": '"production"' },
     minify: true,
     external: externals,
-    logLevel: "info",
+    logLevel: "info" as const,
+  };
+
+  // ── Standalone web server entry ──────────────────────────────────────────
+  console.log("Building server (standalone)...");
+  await esbuild({
+    ...sharedConfig,
+    entryPoints: [path.resolve(__dirname, "src/index.ts")],
+    outfile: path.resolve(distDir, "index.cjs"),
   });
+
+  // ── Electron entry — exports startServer() ───────────────────────────────
+  console.log("Building server (electron-entry)...");
+  await esbuild({
+    ...sharedConfig,
+    entryPoints: [path.resolve(__dirname, "src/electron-entry.ts")],
+    outfile: path.resolve(distDir, "electron-entry.cjs"),
+  });
+
+  console.log("Build complete.");
 }
 
 buildAll().catch((err) => {
