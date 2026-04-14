@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, shell, dialog } from "electron";
+import { app, BrowserWindow, Menu, shell, dialog, screen } from "electron";
 import path from "path";
 import net from "net";
 import http from "http";
@@ -8,6 +8,7 @@ const isDev = !app.isPackaged;
 
 let serverPort = 3001;
 let mainWindow: BrowserWindow | null = null;
+let crowdWindow: BrowserWindow | null = null;
 
 // ── Path helpers ──────────────────────────────────────────────────────────────
 
@@ -115,9 +116,77 @@ async function startServer(port: number): Promise<void> {
   await serverModule.startServer();
 }
 
-// ── Window ─────────────────────────────────────────────────────────────────────
+// ── Windows ────────────────────────────────────────────────────────────────────
 
-function buildMenu(port: number, ip: string): void {
+function createMainWindow(port: number): void {
+  // Always open the KJ panel on the primary display
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { x, y } = primaryDisplay.bounds;
+
+  mainWindow = new BrowserWindow({
+    x: x + 40,
+    y: y + 40,
+    width: 1440,
+    height: 900,
+    minWidth: 1024,
+    minHeight: 700,
+    title: "NEON KJ — Control Panel",
+    backgroundColor: "#0a0a0f",
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  mainWindow.loadURL(`http://localhost:${port}/host`);
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
+  });
+}
+
+function createCrowdWindow(port: number): boolean {
+  const displays = screen.getAllDisplays();
+  const secondDisplay = displays.find(
+    (d) => d.id !== screen.getPrimaryDisplay().id
+  );
+
+  if (!secondDisplay) return false;
+
+  crowdWindow = new BrowserWindow({
+    x: secondDisplay.bounds.x,
+    y: secondDisplay.bounds.y,
+    width: secondDisplay.bounds.width,
+    height: secondDisplay.bounds.height,
+    fullscreen: true,
+    title: "NEON KJ — Crowd Display",
+    backgroundColor: "#0a0a0f",
+    frame: false,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  crowdWindow.loadURL(`http://localhost:${port}/crowd`);
+
+  crowdWindow.on("closed", () => {
+    crowdWindow = null;
+  });
+
+  return true;
+}
+
+// ── App menu ───────────────────────────────────────────────────────────────────
+
+function buildMenu(port: number, ip: string, hasCrowdScreen: boolean): void {
   const menu = Menu.buildFromTemplate([
     {
       label: "NEON KJ",
@@ -128,7 +197,13 @@ function buildMenu(port: number, ip: string): void {
             dialog.showMessageBox({
               title: "NEON KJ",
               message: "NEON KJ — Karaoke Rotation System",
-              detail: `Running on port ${port}\nSinger URL: http://${ip}:${port}/singer`,
+              detail: [
+                `Running on port ${port}`,
+                `Singer URL: http://${ip}:${port}/singer`,
+                hasCrowdScreen
+                  ? "Crowd display is open on your second screen."
+                  : "No second display detected — use Screens → Open Crowd Display.",
+              ].join("\n"),
             });
           },
         },
@@ -146,14 +221,37 @@ function buildMenu(port: number, ip: string): void {
         {
           label: "KJ Control Panel",
           accelerator: "CmdOrCtrl+1",
-          click: () =>
-            mainWindow?.loadURL(`http://localhost:${port}/host`),
+          click: () => mainWindow?.loadURL(`http://localhost:${port}/host`),
+        },
+        { type: "separator" },
+        {
+          label: hasCrowdScreen
+            ? "Crowd Display (on second screen)"
+            : "Open Crowd Display in Browser",
+          accelerator: "CmdOrCtrl+2",
+          click: () => {
+            if (crowdWindow) {
+              crowdWindow.focus();
+            } else {
+              // No second display — open in the default browser instead
+              shell.openExternal(`http://localhost:${port}/crowd`);
+            }
+          },
         },
         {
-          label: "Open Crowd Display in Browser",
-          accelerator: "CmdOrCtrl+2",
-          click: () =>
-            shell.openExternal(`http://localhost:${port}/crowd`),
+          label: "Reopen Crowd on Second Screen",
+          enabled: displays().length > 1,
+          click: () => {
+            if (crowdWindow) crowdWindow.close();
+            const opened = createCrowdWindow(port);
+            if (!opened) {
+              dialog.showMessageBox({
+                message: "No second display detected.",
+                detail:
+                  "Connect a second monitor or TV and try again.",
+              });
+            }
+          },
         },
         { type: "separator" },
         {
@@ -164,41 +262,14 @@ function buildMenu(port: number, ip: string): void {
     },
     {
       label: "Dev",
-      submenu: [
-        { role: "reload" },
-        { role: "toggleDevTools" },
-      ],
+      submenu: [{ role: "reload" }, { role: "toggleDevTools" }],
     },
   ]);
   Menu.setApplicationMenu(menu);
 }
 
-function createWindow(port: number): void {
-  mainWindow = new BrowserWindow({
-    width: 1440,
-    height: 900,
-    minWidth: 1024,
-    minHeight: 700,
-    title: "NEON KJ",
-    backgroundColor: "#0a0a0f",
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  mainWindow.loadURL(`http://localhost:${port}/host`);
-
-  mainWindow.on("closed", () => {
-    mainWindow = null;
-  });
-
-  // Open external links in the default browser, not in the app
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
-    return { action: "deny" };
-  });
+function displays() {
+  return screen.getAllDisplays();
 }
 
 // ── App lifecycle ──────────────────────────────────────────────────────────────
@@ -209,8 +280,20 @@ app.whenReady().then(async () => {
     await startServer(serverPort);
 
     const ip = getLocalIP();
-    buildMenu(serverPort, ip);
-    createWindow(serverPort);
+
+    // Open KJ panel first
+    createMainWindow(serverPort);
+
+    // Auto-open crowd display on the second monitor if one is connected
+    const hasCrowdScreen = createCrowdWindow(serverPort);
+
+    if (hasCrowdScreen) {
+      console.log("[NEON KJ Desktop] Second display detected — crowd screen opened.");
+    } else {
+      console.log("[NEON KJ Desktop] No second display — use Screens menu to open crowd display.");
+    }
+
+    buildMenu(serverPort, ip, hasCrowdScreen);
 
     console.log(`[NEON KJ Desktop] KJ Panel  → http://localhost:${serverPort}/host`);
     console.log(`[NEON KJ Desktop] Crowd      → http://localhost:${serverPort}/crowd`);
@@ -230,6 +313,6 @@ app.on("window-all-closed", () => {
 
 app.on("activate", () => {
   if (mainWindow === null) {
-    createWindow(serverPort);
+    createMainWindow(serverPort);
   }
 });
