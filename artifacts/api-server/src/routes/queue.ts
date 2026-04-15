@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { queueEntries, singers, songs } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { getActiveShow, computeQueue, advanceQueue } from "../lib/rotation.js";
 import { broadcast } from "../lib/websocket.js";
 
@@ -10,8 +10,9 @@ const router = Router();
 async function broadcastQueueUpdate(showId: number) {
   const state = await computeQueue(showId);
   broadcast("queue_update", state);
+  // #10: removed dead lastThreeScores: [] — alert state is driven by queueState.lowEnergyAlert
   if (state.lowEnergyAlert) {
-    broadcast("low_energy_alert", { lastThreeScores: [] });
+    broadcast("low_energy_alert", {});
   }
 }
 
@@ -27,6 +28,11 @@ router.post("/queue", async (req, res) => {
 
     const singerRows = await db.select().from(singers).where(eq(singers.id, singerId));
     if (!singerRows[0]) return res.status(404).json({ error: "Singer not found" });
+
+    // #2: Reject singers registered under a different show (e.g. old localStorage ID)
+    if (singerRows[0].showId !== show.id) {
+      return res.status(403).json({ error: "Singer is not registered in the current show" });
+    }
 
     const songRows = await db.select().from(songs).where(eq(songs.id, songId));
     if (!songRows[0]) return res.status(404).json({ error: "Song not found" });
@@ -87,6 +93,10 @@ router.post("/queue/advance", async (_req, res) => {
     if (!show) return res.status(400).json({ error: "No active show" });
 
     const result = await advanceQueue(show.id);
+    if (!result.advanced) {
+      return res.status(429).json({ error: "Advance already in progress" });
+    }
+
     const state = await computeQueue(show.id);
 
     broadcast("queue_update", state);
@@ -111,10 +121,15 @@ router.post("/queue/:id/skip", async (req, res) => {
     const show = await getActiveShow();
     if (!show) return res.status(400).json({ error: "No active show" });
 
-    const rows = await db.select().from(queueEntries).where(eq(queueEntries.id, id));
+    // #3: Only allow skipping entries that belong to the current show
+    const rows = await db.select().from(queueEntries).where(
+      and(eq(queueEntries.id, id), eq(queueEntries.showId, show.id))
+    );
     if (!rows[0]) return res.status(404).json({ error: "Queue entry not found" });
 
-    await db.update(queueEntries).set({ status: "skipped" }).where(eq(queueEntries.id, id));
+    await db.update(queueEntries)
+      .set({ status: "skipped" })
+      .where(and(eq(queueEntries.id, id), eq(queueEntries.showId, show.id)));
 
     await broadcastQueueUpdate(show.id);
     return res.json({ success: true });
@@ -130,7 +145,15 @@ router.delete("/queue/:id", async (req, res) => {
     const show = await getActiveShow();
     if (!show) return res.status(400).json({ error: "No active show" });
 
-    await db.update(queueEntries).set({ status: "skipped" }).where(eq(queueEntries.id, id));
+    // #3: Fetch first to verify ownership, then update
+    const rows = await db.select().from(queueEntries).where(
+      and(eq(queueEntries.id, id), eq(queueEntries.showId, show.id))
+    );
+    if (!rows[0]) return res.status(404).json({ error: "Queue entry not found" });
+
+    await db.update(queueEntries)
+      .set({ status: "skipped" })
+      .where(and(eq(queueEntries.id, id), eq(queueEntries.showId, show.id)));
 
     await broadcastQueueUpdate(show.id);
     return res.json({ success: true });
@@ -143,18 +166,39 @@ router.delete("/queue/:id", async (req, res) => {
 router.patch("/queue/reorder", async (req, res) => {
   try {
     const { orderedIds } = req.body as { orderedIds?: number[] };
-    if (!Array.isArray(orderedIds)) {
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
       return res.status(400).json({ error: "orderedIds array is required" });
     }
 
     const show = await getActiveShow();
     if (!show) return res.status(400).json({ error: "No active show" });
 
-    for (const [idx, entryId] of orderedIds.entries()) {
-      await db.update(queueEntries)
-        .set({ position: idx })
-        .where(eq(queueEntries.id, entryId));
+    // #4: Validate all IDs belong to the current show with waiting status
+    const validEntries = await db
+      .select({ id: queueEntries.id })
+      .from(queueEntries)
+      .where(
+        and(
+          inArray(queueEntries.id, orderedIds),
+          eq(queueEntries.showId, show.id),
+          eq(queueEntries.status, "waiting")
+        )
+      );
+
+    const validIds = new Set(validEntries.map(e => e.id));
+    const invalidIds = orderedIds.filter(id => !validIds.has(id));
+    if (invalidIds.length > 0) {
+      return res.status(400).json({ error: "One or more entry IDs are invalid or not part of the current show" });
     }
+
+    // #4: Wrap position updates in a transaction
+    await db.transaction(async (tx) => {
+      for (const [idx, entryId] of orderedIds.entries()) {
+        await tx.update(queueEntries)
+          .set({ position: idx })
+          .where(and(eq(queueEntries.id, entryId), eq(queueEntries.showId, show.id)));
+      }
+    });
 
     await broadcastQueueUpdate(show.id);
     return res.json({ success: true });
@@ -164,8 +208,6 @@ router.patch("/queue/reorder", async (req, res) => {
   }
 });
 
-router.post("/queue/confirm", async (_req, res) => {
-  return res.json({ confirmed: true });
-});
+// #11: Removed the no-op /queue/confirm stub
 
 export default router;
