@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLiveQueue } from "@/hooks/use-websocket";
 import { useRegisterSinger, useSearchSongs, useAddToQueue, type Song } from "@workspace/api-client-react";
 import { useLocalStorage, useDebounceValue } from "usehooks-ts";
@@ -168,10 +168,16 @@ export default function Singer() {
 
   // Find user's entry in queue
   const myEntry = queueState?.queue?.find(q => q.singerId === singerId);
+  const prevMyEntryRef = useRef<typeof myEntry>(undefined);
 
+  // #13: Only transition view on actual entry appearance/disappearance,
+  // not on every queue update — prevents clobbering future view states
   useEffect(() => {
-    if (myEntry) setView("status");
-    else setView("search");
+    const had = prevMyEntryRef.current !== undefined;
+    const has = myEntry !== undefined;
+    if (!had && has) setView("status");
+    else if (had && !has) setView("search");
+    prevMyEntryRef.current = myEntry;
   }, [myEntry]);
 
   if (!singerId || !singerName) {
