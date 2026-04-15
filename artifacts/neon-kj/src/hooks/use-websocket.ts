@@ -9,6 +9,11 @@ interface WsState {
 
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ws`;
 
+// #9: Only show the "Now On Stage" toast on the singer page
+function isSingerPage(): boolean {
+  return window.location.pathname.includes('/singer');
+}
+
 export function useWebSocketEngine() {
   const [state, setState] = useState<WsState>({
     connected: false,
@@ -27,7 +32,6 @@ export function useWebSocketEngine() {
     ws.onopen = () => {
       console.log('[WS] Connected');
       setState(s => ({ ...s, connected: true }));
-      // Fetch initial state via REST or trigger it via WS if backend supported it
       fetch('/api/shows/current')
         .then(res => res.json())
         .then(data => {
@@ -45,34 +49,45 @@ export function useWebSocketEngine() {
           case 'queue_update':
             setState(s => ({ ...s, queueState: data as QueueState }));
             break;
+
           case 'now_playing':
-            const np = data as QueueItem;
-            toast({
-              title: "🎤 Now On Stage!",
-              description: `${np.singerName} is singing ${np.songTitle}`,
-              className: "border-primary bg-background/95 backdrop-blur shadow-glow-primary",
-            });
+            // #9: Only toast on the singer page — the host UI already shows this visually
+            if (isSingerPage()) {
+              const np = data as QueueItem;
+              toast({
+                title: "🎤 Now On Stage!",
+                description: `${np.singerName} is singing ${np.songTitle}`,
+                className: "border-primary bg-background/95 backdrop-blur shadow-glow-primary",
+              });
+            }
             break;
+
           case 'singer_called':
-            // Custom logic based on stage ('soon', 'performing')
             break;
+
           case 'low_energy_alert':
-            // Banners are driven by the queueState.lowEnergyAlert flag directly
             break;
+
           case 'show_started':
             toast({
               title: "✨ Show Started!",
               description: "The karaoke rotation is now active.",
               className: "border-secondary bg-background/95 backdrop-blur shadow-glow-secondary",
             });
-            // Refetch to get fresh state
+            // #2: Clear stored singer identity so returning singers don't bleed into the new show
+            localStorage.removeItem('neon_kj_singer_id');
+            localStorage.removeItem('neon_kj_singer_name');
             fetch('/api/shows/current').then(r => r.json()).then(d => setState(s => ({ ...s, queueState: d })));
             break;
+
           case 'show_ended':
             toast({
               title: "👋 Show Ended",
               description: "Thanks for a great night!",
             });
+            // Clear singer identity when show ends too
+            localStorage.removeItem('neon_kj_singer_id');
+            localStorage.removeItem('neon_kj_singer_name');
             setState(s => ({ ...s, queueState: null }));
             break;
         }
