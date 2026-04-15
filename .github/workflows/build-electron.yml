@@ -9,7 +9,7 @@ on:
 jobs:
   build-pi:
     name: Build Raspberry Pi 5 AppImage (ARM64)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Checkout code
