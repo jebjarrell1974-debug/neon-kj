@@ -6,7 +6,9 @@ import router from "./routes/index.js";
 
 const app: Express = express();
 
-app.use(cors({ origin: "*", credentials: true }));
+// #12: credentials: true is incompatible with origin: "*" and serves no purpose
+// since there are no auth cookies/headers. Removed credentials flag.
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
