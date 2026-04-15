@@ -50,6 +50,18 @@ router.patch("/songs/:id", async (req, res) => {
     const id = parseInt(req.params["id"] ?? "0", 10);
     const { bpm, energyScore } = req.body as { bpm?: number; energyScore?: number };
 
+    // #5: Validate ranges to prevent permanent sort corruption
+    if (energyScore !== undefined) {
+      if (!Number.isInteger(energyScore) || energyScore < 1 || energyScore > 10) {
+        return res.status(400).json({ error: "energyScore must be an integer between 1 and 10" });
+      }
+    }
+    if (bpm !== undefined) {
+      if (!Number.isInteger(bpm) || bpm < 1 || bpm > 300) {
+        return res.status(400).json({ error: "bpm must be a positive integer between 1 and 300" });
+      }
+    }
+
     const updates: Record<string, number> = {};
     if (bpm !== undefined) updates["bpm"] = bpm;
     if (energyScore !== undefined) updates["energyScore"] = energyScore;
