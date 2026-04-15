@@ -1,48 +1,26 @@
 appId: com.neonkj.app
-productName: NEON KJ
-copyright: NEON KJ
+  productName: NEON KJ
+  copyright: NEON KJ
 
-directories:
-  output: release
-  buildResources: build
+  directories:
+    output: release
+    buildResources: build
 
-# Files included in the app package
-files:
-  - dist/main.js
-  - dist/preload.js
-  - server.cjs
-  - renderer/**
-  - "!renderer/**/*.map"
+  files:
+    - dist/main.js
+    - dist/preload.js
+    - server.cjs
+    - renderer/**
+    - "!renderer/**/*.map"
 
-# Unpack native modules from asar so Node.js can load .node binary files
-asarUnpack:
-  - "node_modules/@libsql/**"
+  asarUnpack:
+    - "node_modules/@libsql/**"
 
-# Windows
-win:
-  target:
-    - target: nsis
-      arch:
-        - x64
-
-nsis:
-  oneClick: false
-  allowToChangeInstallationDirectory: true
-  shortcutName: NEON KJ
-  createDesktopShortcut: always
-  createStartMenuShortcut: true
-
-# macOS
-mac:
-  target:
-    - dmg
-  category: public.app-category.music
-
-# Linux (Raspberry Pi 5 — ARM64)
-linux:
-  target:
-    - target: AppImage
-      arch:
-        - arm64
-  category: Audio
-  executableName: neon-kj
+  linux:
+    target:
+      - target: dir
+        arch:
+          - arm64
+    category: Audio
+    executableName: neon-kj
+  
