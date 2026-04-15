@@ -14,12 +14,11 @@ function DraggableQueueRow({ item, index, onReorder, onSkip, onRemove }: any) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Very simple HTML5 drag and drop implementation as requested
+  // #8: Store entryId (not array index) so a mid-drag queue update doesn't move the wrong item
   const handleDragStart = (e: React.DragEvent) => {
     setIsDragging(true);
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", index.toString());
-    // Slight delay to allow visual update
+    e.dataTransfer.setData("text/plain", item.entryId.toString());
     setTimeout(() => { if (rowRef.current) rowRef.current.style.opacity = '0.4'; }, 0);
   };
 
@@ -35,9 +34,9 @@ function DraggableQueueRow({ item, index, onReorder, onSkip, onRemove }: any) {
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const draggedIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
-    if (draggedIdx !== index && !isNaN(draggedIdx)) {
-      onReorder(draggedIdx, index);
+    const draggedEntryId = parseInt(e.dataTransfer.getData("text/plain"), 10);
+    if (!isNaN(draggedEntryId) && draggedEntryId !== item.entryId) {
+      onReorder(draggedEntryId, item.entryId);
     }
   };
 
@@ -92,9 +91,13 @@ export default function Host() {
     });
   };
 
-  const handleReorder = (fromIdx: number, toIdx: number) => {
+  // #8: Reorder by entryId so a mid-drag queue update doesn't displace the wrong item
+  const handleReorder = (draggedEntryId: number, targetEntryId: number) => {
     if (!queueState?.queue) return;
     const newQueue = [...queueState.queue];
+    const fromIdx = newQueue.findIndex(q => q.entryId === draggedEntryId);
+    const toIdx = newQueue.findIndex(q => q.entryId === targetEntryId);
+    if (fromIdx === -1 || toIdx === -1) return;
     const [moved] = newQueue.splice(fromIdx, 1);
     newQueue.splice(toIdx, 0, moved);
     const orderedIds = newQueue.map(q => q.entryId!);
