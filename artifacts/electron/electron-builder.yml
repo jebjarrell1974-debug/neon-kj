@@ -18,7 +18,7 @@ appId: com.neonkj.app
 
   linux:
     target:
-      - target: dir
+      - target: AppImage
         arch:
           - arm64
     category: Audio
