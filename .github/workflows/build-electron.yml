@@ -96,5 +96,5 @@ jobs:
           path: artifacts/electron/release/*.AppImage
           if-no-files-found: error
           retention-days: 90
-          if-no-files-found: error
-          retention-days: 90
+          
+      
