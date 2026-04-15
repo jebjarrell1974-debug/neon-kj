@@ -37,12 +37,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Install system dependencies for ARM64 cross-compilation
+      - name: Install system dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            libfuse2
+          sudo apt-get install -y --no-install-recommends libfuse2t64
 
       - name: Install all workspace dependencies
         run: pnpm install --frozen-lockfile
@@ -78,7 +76,6 @@ jobs:
         run: |
           mkdir -p node_modules/@libsql
           cp -r ../../../node_modules/@libsql/client node_modules/@libsql/client || true
-          npm install @libsql/linux-arm64-gnu --cpu=arm64 --os=linux --ignore-scripts 2>/dev/null || true
           cp -r ../../../node_modules/@libsql/linux-arm64-gnu node_modules/@libsql/linux-arm64-gnu 2>/dev/null || true
 
       - name: Build Raspberry Pi AppImage (ARM64)
@@ -86,6 +83,7 @@ jobs:
         run: npx electron-builder --linux --arm64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPIMAGE_EXTRACT_AND_RUN: "1"
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
