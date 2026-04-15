@@ -1,13 +1,15 @@
 import { db, client } from "@workspace/db";
 import { queueEntries, singers, songs, performances, shows } from "@workspace/db";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 
 const PEAK_HOURS_START = parseInt(process.env["PEAK_HOURS_START"] ?? "22", 10);
 const PEAK_HOURS_END = parseInt(process.env["PEAK_HOURS_END"] ?? "2", 10);
 const ENERGY_PEAK_BOOST_MINUTES = 2;
-const NEW_SINGER_HEAD_START_MINUTES = -10;
 const LOW_ENERGY_THRESHOLD = 4;
 const LOW_ENERGY_LOOKBACK = 3;
+
+// #6: Mutex — prevents two simultaneous advance calls from promoting two performers
+let advanceMutex = false;
 
 function isPeakHours(): boolean {
   const hour = new Date().getHours();
@@ -172,13 +174,13 @@ export async function computeQueue(showId: number): Promise<QueueState> {
       }
     : null;
 
-  const allPerfs = await db
+  // #7: Fetch only the last N performances — no full table scan
+  const recentPerfs = await db
     .select({ energyScore: performances.energyScore })
     .from(performances)
     .where(eq(performances.showId, showId))
-    .orderBy(asc(performances.id));
-
-  const recentPerfs = allPerfs.slice(-LOW_ENERGY_LOOKBACK);
+    .orderBy(desc(performances.id))
+    .limit(LOW_ENERGY_LOOKBACK);
 
   const lowEnergyAlert =
     recentPerfs.length === LOW_ENERGY_LOOKBACK &&
@@ -188,91 +190,102 @@ export async function computeQueue(showId: number): Promise<QueueState> {
 }
 
 export async function advanceQueue(showId: number): Promise<{ advanced: boolean; newPerformer: QueueItem | null }> {
-  const performingRows = await db
-    .select({
-      entryId: queueEntries.id,
-      singerId: queueEntries.singerId,
-      songId: queueEntries.songId,
-    })
-    .from(queueEntries)
-    .where(
-      and(
-        eq(queueEntries.showId, showId),
-        eq(queueEntries.status, "performing")
-      )
-    );
-  const currentPerforming = performingRows[0];
+  // #6: Reject concurrent advance calls immediately
+  if (advanceMutex) {
+    return { advanced: false, newPerformer: null };
+  }
+  advanceMutex = true;
 
-  if (currentPerforming) {
-    const songRows = await db.select().from(songs).where(eq(songs.id, currentPerforming.songId));
-    const song = songRows[0];
-    if (song) {
-      const singerRows = await db.select().from(singers).where(eq(singers.id, currentPerforming.singerId));
-      const singer = singerRows[0];
-      if (singer) {
-        await db.update(singers)
-          .set({
-            virtualStageTimeMinutes: singer.virtualStageTimeMinutes + song.durationMinutes,
-            songsSung: singer.songsSung + 1,
-          })
-          .where(eq(singers.id, currentPerforming.singerId));
+  try {
+    // #1: Wrap all writes in a single transaction — prevents DB corruption on failure
+    await db.transaction(async (tx) => {
+      const performingRows = await tx
+        .select({
+          entryId: queueEntries.id,
+          singerId: queueEntries.singerId,
+          songId: queueEntries.songId,
+        })
+        .from(queueEntries)
+        .where(
+          and(
+            eq(queueEntries.showId, showId),
+            eq(queueEntries.status, "performing")
+          )
+        );
+      const currentPerforming = performingRows[0];
 
-        await db.insert(performances).values({
-          showId,
-          singerId: currentPerforming.singerId,
-          songId: currentPerforming.songId,
-          performedAt: new Date(),
-          waitTimeMinutes: 0,
-          energyScore: song.energyScore,
-        });
+      if (currentPerforming) {
+        const songRows = await tx.select().from(songs).where(eq(songs.id, currentPerforming.songId));
+        const song = songRows[0];
+        if (song) {
+          const singerRows = await tx.select().from(singers).where(eq(singers.id, currentPerforming.singerId));
+          const singer = singerRows[0];
+          if (singer) {
+            await tx.update(singers)
+              .set({
+                virtualStageTimeMinutes: singer.virtualStageTimeMinutes + song.durationMinutes,
+                songsSung: singer.songsSung + 1,
+              })
+              .where(eq(singers.id, currentPerforming.singerId));
+
+            await tx.insert(performances).values({
+              showId,
+              singerId: currentPerforming.singerId,
+              songId: currentPerforming.songId,
+              performedAt: new Date(),
+              waitTimeMinutes: 0,
+              energyScore: song.energyScore,
+            });
+          }
+        }
+
+        await tx.update(queueEntries)
+          .set({ status: "done", performedAt: new Date() })
+          .where(eq(queueEntries.id, currentPerforming.entryId));
       }
-    }
 
-    await db.update(queueEntries)
-      .set({ status: "done", performedAt: new Date() })
-      .where(eq(queueEntries.id, currentPerforming.entryId));
-  }
+      const waiting = await tx
+        .select({
+          entryId: queueEntries.id,
+          singerId: queueEntries.singerId,
+          songId: queueEntries.songId,
+          virtualStageTimeMinutes: singers.virtualStageTimeMinutes,
+          songEnergyScore: songs.energyScore,
+        })
+        .from(queueEntries)
+        .innerJoin(singers, eq(queueEntries.singerId, singers.id))
+        .innerJoin(songs, eq(queueEntries.songId, songs.id))
+        .where(
+          and(
+            eq(queueEntries.showId, showId),
+            eq(queueEntries.status, "waiting")
+          )
+        );
 
-  const waiting = await db
-    .select({
-      entryId: queueEntries.id,
-      singerId: queueEntries.singerId,
-      songId: queueEntries.songId,
-      virtualStageTimeMinutes: singers.virtualStageTimeMinutes,
-      songEnergyScore: songs.energyScore,
-    })
-    .from(queueEntries)
-    .innerJoin(singers, eq(queueEntries.singerId, singers.id))
-    .innerJoin(songs, eq(queueEntries.songId, songs.id))
-    .where(
-      and(
-        eq(queueEntries.showId, showId),
-        eq(queueEntries.status, "waiting")
-      )
-    );
+      if (waiting.length === 0) return;
 
-  if (waiting.length === 0) {
+      const peakHours = isPeakHours();
+      const next = [...waiting].sort((a, b) => {
+        const aEff = peakHours && a.songEnergyScore > 7
+          ? a.virtualStageTimeMinutes - ENERGY_PEAK_BOOST_MINUTES
+          : a.virtualStageTimeMinutes;
+        const bEff = peakHours && b.songEnergyScore > 7
+          ? b.virtualStageTimeMinutes - ENERGY_PEAK_BOOST_MINUTES
+          : b.virtualStageTimeMinutes;
+        return aEff - bEff;
+      })[0];
+
+      if (!next) return;
+
+      await tx.update(queueEntries)
+        .set({ status: "performing" })
+        .where(eq(queueEntries.id, next.entryId));
+    });
+
     return { advanced: true, newPerformer: null };
+  } finally {
+    advanceMutex = false;
   }
-
-  const peakHours = isPeakHours();
-  const next = waiting.sort((a, b) => {
-    const aEff = peakHours && a.songEnergyScore > 7
-      ? a.virtualStageTimeMinutes - ENERGY_PEAK_BOOST_MINUTES
-      : a.virtualStageTimeMinutes;
-    const bEff = peakHours && b.songEnergyScore > 7
-      ? b.virtualStageTimeMinutes - ENERGY_PEAK_BOOST_MINUTES
-      : b.virtualStageTimeMinutes;
-    return aEff - bEff;
-  })[0];
-
-  if (!next) return { advanced: true, newPerformer: null };
-
-  await db.update(queueEntries)
-    .set({ status: "performing" })
-    .where(eq(queueEntries.id, next.entryId));
-
-  return { advanced: true, newPerformer: null };
 }
 
 export async function initSchema() {
