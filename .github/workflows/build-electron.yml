@@ -15,9 +15,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Verify runner architecture
-        run: uname -m
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -36,9 +33,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-${{ runner.arch }}-pnpm-store-
 
       - name: Install system dependencies
         run: |
@@ -46,6 +43,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends libfuse2
 
       - name: Install all workspace dependencies
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm install --frozen-lockfile
 
       - name: Build React frontend (renderer)
@@ -56,7 +55,7 @@ jobs:
           NODE_ENV: production
         run: pnpm run build
 
-      - name: Build API server (both entries)
+      - name: Build API server
         working-directory: artifacts/api-server
         run: pnpm run build
 
@@ -66,28 +65,40 @@ jobs:
       - name: Copy renderer into electron package
         run: cp -r artifacts/neon-kj/dist/public artifacts/electron/renderer
 
-      - name: Install electron package dependencies
-        working-directory: artifacts/electron
-        run: npm install
-
       - name: Compile Electron TypeScript
         working-directory: artifacts/electron
-        run: npx tsc
+        run: pnpm exec tsc
 
-      - name: Install libsql ARM64 native module
+      - name: Copy libsql ARM64 native module
         working-directory: artifacts/electron
         run: |
           mkdir -p node_modules/@libsql
-          cp -r ../../../node_modules/@libsql/client node_modules/@libsql/client || true
-          cp -r ../../../node_modules/@libsql/linux-arm64-gnu node_modules/@libsql/linux-arm64-gnu 2>/dev/null || true
+          cp -r ../../node_modules/@libsql/client node_modules/@libsql/client 2>/dev/null || true
+          cp -r ../../node_modules/@libsql/linux-arm64-gnu node_modules/@libsql/linux-arm64-gnu 2>/dev/null || true
 
-      - name: Build Raspberry Pi AppImage (ARM64)
+      - name: Fix app-builder-bin binary for ARM64
         working-directory: artifacts/electron
-        run: npx electron-builder --linux --verbose
+        run: |
+          AB_ARM64="node_modules/app-builder-bin/linux/arm64/app-builder"
+          AB_X64="node_modules/app-builder-bin/linux/x64/app-builder"
+          echo "Runner arch: $(uname -m)"
+          ls -la node_modules/app-builder-bin/linux/ || echo "No linux dir found"
+          if [ -f "$AB_ARM64" ]; then
+            mkdir -p node_modules/app-builder-bin/linux/x64
+            cp "$AB_ARM64" "$AB_X64"
+            chmod +x "$AB_X64"
+            echo "Copied arm64 app-builder to x64 path"
+          else
+            echo "WARNING: arm64 app-builder binary not found at $AB_ARM64"
+            find node_modules/app-builder-bin -name "app-builder" 2>/dev/null || echo "No app-builder binaries found at all"
+          fi
+
+      - name: Build Raspberry Pi AppImage
+        working-directory: artifacts/electron
+        run: pnpm exec electron-builder --linux --verbose
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPIMAGE_EXTRACT_AND_RUN: "1"
-          DEBUG: "electron-builder"
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
@@ -96,5 +107,3 @@ jobs:
           path: artifacts/electron/release/*.AppImage
           if-no-files-found: error
           retention-days: 90
-          
-      
