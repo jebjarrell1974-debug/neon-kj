@@ -1,6 +1,7 @@
 appId: com.neonkj.app
 productName: NEON KJ
 copyright: NEON KJ
+publish: never
 
 directories:
   output: release
