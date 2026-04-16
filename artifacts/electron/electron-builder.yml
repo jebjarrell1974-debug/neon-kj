@@ -1,26 +1,25 @@
 appId: com.neonkj.app
-  productName: NEON KJ
-  copyright: NEON KJ
+productName: NEON KJ
+copyright: NEON KJ
 
-  directories:
-    output: release
-    buildResources: build
+directories:
+  output: release
+  buildResources: build
 
-  files:
-    - dist/main.js
-    - dist/preload.js
-    - server.cjs
-    - renderer/**
-    - "!renderer/**/*.map"
+files:
+  - dist/main.js
+  - dist/preload.js
+  - server.cjs
+  - renderer/**
+  - "!renderer/**/*.map"
 
-  asarUnpack:
-    - "node_modules/@libsql/**"
+asarUnpack:
+  - "node_modules/@libsql/**"
 
-  linux:
-    target:
-      - target: AppImage
-        arch:
-          - arm64
-    category: Audio
-    executableName: neon-kj
-  
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - arm64
+  category: Audio
+  executableName: neon-kj
