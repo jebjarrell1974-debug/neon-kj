@@ -9,7 +9,7 @@ on:
 jobs:
   build-pi:
     name: Build Raspberry Pi 5 AppImage (ARM64)
-    runs-on: ubuntu-22.04-arm
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout code
@@ -65,9 +65,15 @@ jobs:
       - name: Copy renderer into electron package
         run: cp -r artifacts/neon-kj/dist/public artifacts/electron/renderer
 
+      - name: Install electron package dependencies
+        working-directory: artifacts/electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm install
+
       - name: Compile Electron TypeScript
         working-directory: artifacts/electron
-        run: pnpm exec tsc
+        run: npx tsc
 
       - name: Copy libsql ARM64 native module
         working-directory: artifacts/electron
@@ -76,26 +82,9 @@ jobs:
           cp -r ../../node_modules/@libsql/client node_modules/@libsql/client 2>/dev/null || true
           cp -r ../../node_modules/@libsql/linux-arm64-gnu node_modules/@libsql/linux-arm64-gnu 2>/dev/null || true
 
-      - name: Fix app-builder-bin binary for ARM64
+      - name: Build Raspberry Pi AppImage (ARM64)
         working-directory: artifacts/electron
-        run: |
-          AB_ARM64="node_modules/app-builder-bin/linux/arm64/app-builder"
-          AB_X64="node_modules/app-builder-bin/linux/x64/app-builder"
-          echo "Runner arch: $(uname -m)"
-          ls -la node_modules/app-builder-bin/linux/ || echo "No linux dir found"
-          if [ -f "$AB_ARM64" ]; then
-            mkdir -p node_modules/app-builder-bin/linux/x64
-            cp "$AB_ARM64" "$AB_X64"
-            chmod +x "$AB_X64"
-            echo "Copied arm64 app-builder to x64 path"
-          else
-            echo "WARNING: arm64 app-builder binary not found at $AB_ARM64"
-            find node_modules/app-builder-bin -name "app-builder" 2>/dev/null || echo "No app-builder binaries found at all"
-          fi
-
-      - name: Build Raspberry Pi AppImage
-        working-directory: artifacts/electron
-        run: pnpm exec electron-builder --linux --verbose
+        run: npx electron-builder --linux --arm64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPIMAGE_EXTRACT_AND_RUN: "1"
