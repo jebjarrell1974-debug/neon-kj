@@ -6,6 +6,9 @@ on:
       - "v*"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-pi:
     name: Build Raspberry Pi 5 AppImage (ARM64)
@@ -89,10 +92,32 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPIMAGE_EXTRACT_AND_RUN: "1"
 
-      - name: Upload AppImage
-        uses: actions/upload-artifact@v4
-        with:
-          name: NEON-KJ-RaspberryPi5
-          path: artifacts/electron/release/*.AppImage
-          if-no-files-found: error
-          retention-days: 90
+      - name: Rename AppImage for clean download filename
+        run: |
+          cd artifacts/electron/release
+          for f in *.AppImage; do
+            mv "$f" "NEON-KJ-RaspberryPi5-arm64.AppImage"
+          done
+          ls -lh *.AppImage
+
+      - name: Publish to GitHub Releases (latest)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest --yes --repo ${{ github.repository }} 2>/dev/null || true
+          gh release create latest \
+            artifacts/electron/release/NEON-KJ-RaspberryPi5-arm64.AppImage \
+            --repo ${{ github.repository }} \
+            --title "NEON KJ — Latest Build" \
+            --notes "$(cat <<'NOTES'
+## Install on Raspberry Pi 5
+
+```bash
+curl -L https://github.com/${{ github.repository }}/releases/latest/download/NEON-KJ-RaspberryPi5-arm64.AppImage \
+  -o NEON-KJ.AppImage
+chmod +x NEON-KJ.AppImage
+./NEON-KJ.AppImage
+```
+NOTES
+)" \
+            --latest
